@@ -13,8 +13,8 @@ function prepareEmailSummary(emails) {
     topicsPreview: []
   };
 
-  // Limitar a los primeros 100 emails para el análisis detallado
-  const emailsToAnalyze = emails.slice(0, 100);
+  // Analizar TODOS los emails (no limitar a 100)
+  const emailsToAnalyze = emails;
 
   emailsToAnalyze.forEach(email => {
     // Contar remitentes
@@ -65,39 +65,47 @@ function generateAnalysisPrompt(emailSummary) {
     .map(([recipient, count]) => `${recipient}: ${count} emails`)
     .join('\n');
 
-  const sampleSubjects = emailSummary.subjects.slice(0, 20).join('\n');
+  // Incluir TODOS los asuntos, no solo 20
+  const allSubjects = emailSummary.subjects.join(' | ');
 
-  const sampleTopics = emailSummary.topicsPreview
-    .slice(0, 10)
-    .map(t => `Asunto: ${t.subject}\nContenido: ${t.preview}`)
-    .join('\n\n---\n\n');
+  // Incluir TODO el contenido disponible
+  const allTopics = emailSummary.topicsPreview
+    .map(t => `${t.subject}: ${t.preview}`)
+    .join(' | ');
 
-  return `Analiza ${emailSummary.total} correos y genera un INFORME EJECUTIVO DE INNOVACIÓN 2025.
+  return `Analiza ${emailSummary.total} correos corporativos y genera INFORME EJECUTIVO DE INNOVACIÓN 2025.
 
-REMITENTES FRECUENTES: ${topSenders.split('\n').slice(0, 5).join(', ')}
+ANÁLISIS COMPLETO DE ${emailSummary.total} CORREOS:
 
-ASUNTOS: ${sampleSubjects.split('\n').slice(0, 10).join(' | ')}
+TOP REMITENTES:
+${topSenders}
 
-CONTENIDO MUESTRA:
-${sampleTopics.substring(0, 1500)}
+TOP DESTINATARIOS:
+${topRecipients}
 
-Genera un informe con estas secciones:
+TODOS LOS ASUNTOS ANALIZADOS:
+${allSubjects}
 
-1. RESUMEN EJECUTIVO: Hallazgos principales de la comunicación analizada
+CONTENIDO COMPLETO DE LOS CORREOS:
+${allTopics}
 
-2. INNOVACIÓN: Proyectos, tecnologías y transformación digital identificados en los correos
+GENERA INFORME PROFESIONAL CON:
 
-3. GESTIÓN: Temas operativos, decisiones y proyectos mencionados
+1. RESUMEN EJECUTIVO: Principales hallazgos del análisis de TODOS los ${emailSummary.total} correos
 
-4. COLABORACIÓN: Equipos activos y patrones de comunicación
+2. INNOVACIÓN IDENTIFICADA: Proyectos específicos, tecnologías mencionadas, iniciativas de transformación digital encontradas en los correos
 
-5. LOGROS 2025: Resultados y éxitos comunicados
+3. GESTIÓN Y OPERACIONES: Temas operativos concretos, decisiones comunicadas, proyectos activos identificados
 
-6. OPORTUNIDADES: Áreas de mejora identificadas
+4. COLABORACIÓN: Personas y equipos más activos, patrones de comunicación observados
 
-7. RECOMENDACIONES 2026: Acciones estratégicas sugeridas
+5. LOGROS 2025: Resultados específicos y éxitos mencionados en los correos
 
-Responde en español, formato profesional, máximo 1500 palabras.`;
+6. ÁREAS DE MEJORA: Problemas recurrentes, temas que requieren atención identificados
+
+7. RECOMENDACIONES 2026: Acciones concretas basadas en los hallazgos
+
+Responde en español, profesional, máximo 2000 palabras. ANALIZA TODO EL CONTENIDO PROPORCIONADO.`;
 }
 
 /**
@@ -122,8 +130,8 @@ async function callAIServer(prompt) {
         options: {
           temperature: 0.7,
           top_p: 0.9,
-          num_predict: 2000,  // Permitir respuestas más largas
-          num_ctx: 4096       // Contexto más grande
+          num_predict: 3000,  // Respuestas más largas
+          num_ctx: 8192       // Contexto más grande para procesar todos los emails
         }
       }),
     });
