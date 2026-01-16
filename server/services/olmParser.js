@@ -1,8 +1,9 @@
 import fs from 'fs/promises';
+import fsSync from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import xml2js from 'xml2js';
-import extract from 'extract-zip';
+import AdmZip from 'adm-zip';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -124,7 +125,16 @@ export async function parseOLMFile(olmFilePath) {
 
     // Los archivos OLM son archivos ZIP
     console.log('📦 Extrayendo archivo OLM...');
-    await extract(olmFilePath, { dir: tempDir });
+
+    try {
+      const zip = new AdmZip(olmFilePath);
+      zip.extractAllTo(tempDir, true);
+      console.log('✅ Archivo extraído exitosamente');
+    } catch (zipError) {
+      // Si falla como ZIP, intentar leerlo como archivo directo
+      console.log('⚠️ No se pudo extraer como ZIP, intentando lectura directa...');
+      throw zipError;
+    }
 
     // Buscar todos los archivos de mensajes
     console.log('🔎 Buscando mensajes...');
