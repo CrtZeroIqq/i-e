@@ -47,4 +47,5 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor ejecutándose en http://localhost:${PORT}`);
   console.log(`📧 Analizador de emails OLM listo`);
+  console.log(`📦 Límite de tamaño de archivo: ${parseInt(process.env.MAX_FILE_SIZE || '104857600')} bytes (${(parseInt(process.env.MAX_FILE_SIZE || '104857600') / 1024 / 1024).toFixed(2)} MB)`);
 });
