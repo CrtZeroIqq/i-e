@@ -72,7 +72,9 @@ function generateAnalysisPrompt(emailSummary) {
     .map(t => `Asunto: ${t.subject}\nContenido: ${t.preview}`)
     .join('\n\n---\n\n');
 
-  return `Analiza estos ${emailSummary.total} correos electrónicos y genera un informe de gestión detallado.
+  return `Eres un analista de gestión empresarial. Analiza estos ${emailSummary.total} correos electrónicos y genera un INFORME EJECUTIVO DE INNOVACIÓN Y GESTIÓN 2025.
+
+DATOS DE CORREOS ANALIZADOS:
 
 REMITENTES MÁS FRECUENTES:
 ${topSenders}
@@ -86,15 +88,44 @@ ${sampleSubjects}
 MUESTRA DE CONTENIDO:
 ${sampleTopics}
 
-Por favor, proporciona un análisis ejecutivo que incluya:
-1. Temas principales identificados en los correos
-2. Patrones de comunicación (frecuencia, horarios si están disponibles)
-3. Personas o equipos más activos
-4. Asuntos críticos o recurrentes
-5. Recomendaciones para mejorar la gestión de correos
-6. Métricas clave de comunicación
+GENERA UN INFORME EJECUTIVO ESTRUCTURADO QUE INCLUYA:
 
-Responde en español de forma estructurada y profesional.`;
+## 1. RESUMEN EJECUTIVO
+Breve resumen del análisis de comunicaciones y principales hallazgos.
+
+## 2. INICIATIVAS DE INNOVACIÓN IDENTIFICADAS
+- Proyectos de innovación mencionados en los correos
+- Nuevas tecnologías o metodologías discutidas
+- Propuestas de mejora o transformación digital
+- Colaboraciones innovadoras
+
+## 3. GESTIÓN Y OPERACIONES
+- Principales temas de gestión tratados
+- Decisiones estratégicas comunicadas
+- Proyectos en curso y su estado
+- Desafíos operativos identificados
+
+## 4. COLABORACIÓN Y EQUIPOS
+- Patrones de colaboración entre equipos
+- Personas clave en la organización
+- Dinámicas de comunicación interdepartamental
+
+## 5. LOGROS Y RESULTADOS 2025
+- Hitos alcanzados mencionados
+- Resultados positivos comunicados
+- Éxitos celebrados
+
+## 6. ÁREAS DE OPORTUNIDAD
+- Temas recurrentes que requieren atención
+- Posibles mejoras en comunicación
+- Oportunidades de innovación no aprovechadas
+
+## 7. RECOMENDACIONES ESTRATÉGICAS
+- Acciones prioritarias para 2026
+- Áreas de inversión en innovación
+- Mejoras en procesos de comunicación y gestión
+
+Responde en español de forma estructurada, profesional y enfocada en innovación y gestión estratégica.`;
 }
 
 /**
