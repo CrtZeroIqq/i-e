@@ -74,40 +74,61 @@ function generateAnalysisPrompt(emailSummary) {
     .map(t => `[CORREO] Asunto: "${t.subject}" | Contenido: ${t.preview}`)
     .join('\n');
 
-  return `Eres analista. Analiza ${emailSummary.total} correos y genera INFORME EJECUTIVO 2025.
+  return `Eres analista para Instituto Profesional Santo Tomás. Analiza ${emailSummary.total} correos sobre Innovación y Emprendimiento 2025.
+
+CONTEXTO: Informe ejecutivo para Dirección Académica sobre gestión I+E año 2025.
 
 REMITENTES PRINCIPALES:
 ${topSenders}
 
-ASUNTOS (muestra de 150 correos):
+ASUNTOS CLAVE:
 ${limitedSubjects}
 
-CONTENIDO REAL DE 80 CORREOS:
+CONTENIDO DE CORREOS:
 ${limitedTopics}
 
-INSTRUCCIONES CRÍTICAS:
-- USA el contenido REAL de los correos mostrados arriba
-- CITA asuntos y temas ESPECÍFICOS de los correos
-- NO inventes proyectos genéricos
-- Identifica personas, proyectos y tecnologías REALES mencionadas
+GENERA INFORME EJECUTIVO PROFESIONAL:
 
-GENERA INFORME CON:
+## RESUMEN EJECUTIVO
+Síntesis de actividades I+E 2025, principales logros y desafíos identificados en las comunicaciones.
 
-1. RESUMEN: Hallazgos basados en el contenido real analizado
+## 1. INICIATIVAS Y PROYECTOS DE INNOVACIÓN
+- Proyectos específicos mencionados (nombres, responsables, estado)
+- Torneos, concursos o eventos de innovación realizados
+- Iniciativas de emprendimiento desarrolladas
+- Tecnologías o metodologías innovadoras aplicadas
 
-2. INNOVACIÓN: Proyectos/tecnologías ESPECÍFICAS mencionadas en los correos
+## 2. GESTIÓN ACADÉMICA Y OPERATIVA
+- Decisiones estratégicas comunicadas
+- Coordinaciones con docentes y estudiantes
+- Procesos administrativos relacionados con I+E
+- Reuniones y acuerdos relevantes
 
-3. GESTIÓN: Temas y decisiones CONCRETAS comunicadas
+## 3. COLABORACIÓN Y PARTICIPACIÓN
+- Docentes involucrados en I+E
+- Participación estudiantil
+- Colaboraciones externas (empresas, instituciones)
+- Trabajo interdisciplinario
 
-4. COLABORACIÓN: Personas y equipos identificados por nombre
+## 4. RESULTADOS Y LOGROS 2025
+- Hitos alcanzados
+- Métricas de participación
+- Proyectos completados o en desarrollo
+- Reconocimientos o premios
 
-5. LOGROS 2025: Resultados ESPECÍFICOS mencionados
+## 5. DESAFÍOS Y ÁREAS DE MEJORA
+- Obstáculos identificados
+- Necesidades detectadas
+- Recursos requeridos
+- Procesos a optimizar
 
-6. OPORTUNIDADES: Problemas reales identificados
+## 6. RECOMENDACIONES 2026
+- Acciones prioritarias
+- Estrategias de mejora
+- Propuestas de inversión
+- Metas sugeridas
 
-7. RECOMENDACIONES: Basadas en hallazgos concretos
-
-IMPORTANTE: Menciona asuntos específicos, nombres de proyectos reales, y citas textuales. NO seas genérico.`;
+IMPORTANTE: Usa nombres específicos, fechas, proyectos y personas REALES mencionadas en los correos. Formato ejecutivo profesional.`;
 }
 
 /**
