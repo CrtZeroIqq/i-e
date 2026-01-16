@@ -6,6 +6,10 @@ import { parseOLMFile } from '../services/olmParser.js';
 import { analyzeEmails } from '../services/aiService.js';
 import { generateReport } from '../services/reportGenerator.js';
 import fs from 'fs/promises';
+import dotenv from 'dotenv';
+
+// Asegurar que dotenv esté cargado
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,10 +28,14 @@ const storage = multer.diskStorage({
   }
 });
 
+// Leer límite de tamaño del .env
+const maxFileSize = parseInt(process.env.MAX_FILE_SIZE || '1073741824'); // 1GB por defecto
+console.log(`🔧 Multer configurado con límite: ${maxFileSize} bytes (${(maxFileSize / 1024 / 1024).toFixed(2)} MB)`);
+
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: parseInt(process.env.MAX_FILE_SIZE || '104857600') // 100MB por defecto
+    fileSize: maxFileSize
   },
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
@@ -40,13 +48,28 @@ const upload = multer({
 });
 
 // Ruta para subir y analizar archivo OLM
-router.post('/upload', upload.single('olmFile'), async (req, res) => {
-  let filePath = null;
-
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No se proporcionó ningún archivo' });
+router.post('/upload', (req, res) => {
+  upload.single('olmFile')(req, res, async (err) => {
+    // Manejar errores de multer
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({
+          error: 'Archivo demasiado grande',
+          message: `El archivo excede el límite de ${(maxFileSize / 1024 / 1024).toFixed(0)} MB`,
+          limit: maxFileSize
+        });
+      }
+      return res.status(400).json({ error: err.message });
+    } else if (err) {
+      return res.status(400).json({ error: err.message });
     }
+
+    let filePath = null;
+
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No se proporcionó ningún archivo' });
+      }
 
     filePath = req.file.path;
     console.log('📁 Archivo recibido:', req.file.originalname);
@@ -93,6 +116,7 @@ router.post('/upload', upload.single('olmFile'), async (req, res) => {
       message: error.message
     });
   }
+  });
 });
 
 // Ruta para obtener estado del servidor de IA
