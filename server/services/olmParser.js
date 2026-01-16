@@ -128,24 +128,41 @@ function parseMessageContent(content) {
       body: ''
     };
 
-    // Extraer campos con regex
-    const fromMatch = contentStr.match(/From:\s*([^\r\n]+)/i);
-    const toMatch = contentStr.match(/To:\s*([^\r\n]+)/i);
-    const subjectMatch = contentStr.match(/Subject:\s*([^\r\n]+)/i);
-    const dateMatch = contentStr.match(/Date:\s*([^\r\n]+)/i);
+    // Extraer campos con regex (más flexible)
+    const fromMatch = contentStr.match(/From:\s*([^\r\n]+)/i) ||
+                     contentStr.match(/<OPFMessageCopyFromAddress>([^<]+)/i);
+    const toMatch = contentStr.match(/To:\s*([^\r\n]+)/i) ||
+                   contentStr.match(/<OPFMessageCopyToAddresses>([^<]+)/i);
+    const subjectMatch = contentStr.match(/Subject:\s*([^\r\n]+)/i) ||
+                        contentStr.match(/<OPFMessageCopySubject>([^<]+)/i);
+    const dateMatch = contentStr.match(/Date:\s*([^\r\n]+)/i) ||
+                     contentStr.match(/<OPFMessageCopySentTime>([^<]+)/i);
 
     email.from = fromMatch ? fromMatch[1].trim() : '';
     email.to = toMatch ? toMatch[1].trim() : '';
     email.subject = subjectMatch ? subjectMatch[1].trim() : '';
     email.date = dateMatch ? dateMatch[1].trim() : '';
 
-    // Intentar extraer el cuerpo después de las cabeceras
+    // Extraer cuerpo de múltiples formas
     const bodyMatch = contentStr.split(/\r?\n\r?\n/);
     if (bodyMatch.length > 1) {
-      email.body = stripHTML(bodyMatch.slice(1).join('\n').substring(0, 1000));
+      email.body = stripHTML(bodyMatch.slice(1).join('\n').substring(0, 2000));
     }
 
-    return email;
+    // Si no hay body, intentar extraer de tags XML
+    if (!email.body || email.body.length < 20) {
+      const bodyXML = contentStr.match(/<OPFMessageCopyBody>([^<]+)/i);
+      if (bodyXML) {
+        email.body = stripHTML(bodyXML[1]).substring(0, 2000);
+      }
+    }
+
+    // Aceptar el email si al menos tiene asunto O remitente O contenido
+    if (email.subject || email.from || email.body.length > 10) {
+      return email;
+    }
+
+    return null;
   } catch (error) {
     return null;
   }
@@ -180,9 +197,11 @@ export async function parseOLMFile(olmFilePath) {
 
     console.log(`📬 Filtrando ${messageEntries.length} posibles mensajes...`);
 
-    // Parsear mensajes (limitar a 500 para evitar sobrecarga)
+    // Parsear TODOS los mensajes (no limitar)
     const emails = [];
-    const limit = Math.min(messageEntries.length, 500);
+    const limit = messageEntries.length;
+    let parsed = 0;
+    let skipped = 0;
 
     for (let i = 0; i < limit; i++) {
       const entry = messageEntries[i];
@@ -191,21 +210,25 @@ export async function parseOLMFile(olmFilePath) {
         const content = entry.getData();
         const email = parseMessageContent(content);
 
-        if (email && (email.subject || email.from)) {
+        if (email) {
           emails.push(email);
+          parsed++;
+        } else {
+          skipped++;
         }
       } catch (parseError) {
-        // Ignorar archivos que no se pueden parsear
+        skipped++;
         continue;
       }
 
       // Log de progreso cada 100 mensajes
       if ((i + 1) % 100 === 0) {
-        console.log(`📊 Procesados ${i + 1}/${limit} archivos...`);
+        console.log(`📊 Procesados ${i + 1}/${limit} archivos (${parsed} emails, ${skipped} saltados)...`);
       }
     }
 
-    console.log(`✅ Se parsearon ${emails.length} correos exitosamente`);
+    console.log(`✅ Se parsearon ${emails.length} correos exitosamente de ${messageEntries.length} archivos`);
+    console.log(`📈 Tasa de éxito: ${((emails.length / messageEntries.length) * 100).toFixed(1)}%`);
     return emails;
 
   } catch (error) {

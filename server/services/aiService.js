@@ -65,47 +65,49 @@ function generateAnalysisPrompt(emailSummary) {
     .map(([recipient, count]) => `${recipient}: ${count} emails`)
     .join('\n');
 
-  // Incluir TODOS los asuntos, no solo 20
-  const allSubjects = emailSummary.subjects.join(' | ');
+  // Limitar asuntos para no exceder límites de tokens (primeros 150)
+  const limitedSubjects = emailSummary.subjects.slice(0, 150).join(' | ');
 
-  // Incluir TODO el contenido disponible
-  const allTopics = emailSummary.topicsPreview
-    .map(t => `${t.subject}: ${t.preview}`)
-    .join(' | ');
+  // Limitar contenido (primeros 80 emails con más contenido)
+  const limitedTopics = emailSummary.topicsPreview
+    .slice(0, 80)
+    .map(t => `[CORREO] Asunto: "${t.subject}" | Contenido: ${t.preview}`)
+    .join('\n');
 
-  return `Analiza ${emailSummary.total} correos corporativos y genera INFORME EJECUTIVO DE INNOVACIÓN 2025.
+  return `Eres analista. Analiza ${emailSummary.total} correos y genera INFORME EJECUTIVO 2025.
 
-ANÁLISIS COMPLETO DE ${emailSummary.total} CORREOS:
-
-TOP REMITENTES:
+REMITENTES PRINCIPALES:
 ${topSenders}
 
-TOP DESTINATARIOS:
-${topRecipients}
+ASUNTOS (muestra de 150 correos):
+${limitedSubjects}
 
-TODOS LOS ASUNTOS ANALIZADOS:
-${allSubjects}
+CONTENIDO REAL DE 80 CORREOS:
+${limitedTopics}
 
-CONTENIDO COMPLETO DE LOS CORREOS:
-${allTopics}
+INSTRUCCIONES CRÍTICAS:
+- USA el contenido REAL de los correos mostrados arriba
+- CITA asuntos y temas ESPECÍFICOS de los correos
+- NO inventes proyectos genéricos
+- Identifica personas, proyectos y tecnologías REALES mencionadas
 
-GENERA INFORME PROFESIONAL CON:
+GENERA INFORME CON:
 
-1. RESUMEN EJECUTIVO: Principales hallazgos del análisis de TODOS los ${emailSummary.total} correos
+1. RESUMEN: Hallazgos basados en el contenido real analizado
 
-2. INNOVACIÓN IDENTIFICADA: Proyectos específicos, tecnologías mencionadas, iniciativas de transformación digital encontradas en los correos
+2. INNOVACIÓN: Proyectos/tecnologías ESPECÍFICAS mencionadas en los correos
 
-3. GESTIÓN Y OPERACIONES: Temas operativos concretos, decisiones comunicadas, proyectos activos identificados
+3. GESTIÓN: Temas y decisiones CONCRETAS comunicadas
 
-4. COLABORACIÓN: Personas y equipos más activos, patrones de comunicación observados
+4. COLABORACIÓN: Personas y equipos identificados por nombre
 
-5. LOGROS 2025: Resultados específicos y éxitos mencionados en los correos
+5. LOGROS 2025: Resultados ESPECÍFICOS mencionados
 
-6. ÁREAS DE MEJORA: Problemas recurrentes, temas que requieren atención identificados
+6. OPORTUNIDADES: Problemas reales identificados
 
-7. RECOMENDACIONES 2026: Acciones concretas basadas en los hallazgos
+7. RECOMENDACIONES: Basadas en hallazgos concretos
 
-Responde en español, profesional, máximo 2000 palabras. ANALIZA TODO EL CONTENIDO PROPORCIONADO.`;
+IMPORTANTE: Menciona asuntos específicos, nombres de proyectos reales, y citas textuales. NO seas genérico.`;
 }
 
 /**
