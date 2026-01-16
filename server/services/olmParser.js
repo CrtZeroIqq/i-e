@@ -201,9 +201,9 @@ function parseMessageContent(content) {
     // Esto evita aceptar basura como /b, /a, tags HTML, etc.
     const hasValidFrom = email.from && email.from.includes('@');
     const hasValidTo = email.to && email.to.includes('@');
-    const hasSubject = email.subject && email.subject.length > 0;
 
-    if ((hasValidFrom || hasValidTo) && hasSubject) {
+    // Necesita al menos un email válido (from o to)
+    if (hasValidFrom || hasValidTo) {
       return email;
     }
 
