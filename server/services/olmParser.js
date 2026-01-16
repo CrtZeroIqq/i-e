@@ -114,54 +114,101 @@ async function findMessageFiles(dir, files = []) {
 }
 
 /**
- * Parsea un archivo OLM
+ * Parsea el contenido de un archivo directamente desde el buffer
  */
-export async function parseOLMFile(olmFilePath) {
-  const tempDir = path.join(__dirname, '../../temp', `olm-${Date.now()}`);
-
+function parseMessageContent(content) {
   try {
-    // Crear directorio temporal
-    await fs.mkdir(tempDir, { recursive: true });
+    const contentStr = content.toString('utf-8');
 
-    // Los archivos OLM son archivos ZIP
-    console.log('📦 Extrayendo archivo OLM...');
+    const email = {
+      from: '',
+      to: '',
+      subject: '',
+      date: '',
+      body: ''
+    };
 
-    try {
-      const zip = new AdmZip(olmFilePath);
-      zip.extractAllTo(tempDir, true);
-      console.log('✅ Archivo extraído exitosamente');
-    } catch (zipError) {
-      // Si falla como ZIP, intentar leerlo como archivo directo
-      console.log('⚠️ No se pudo extraer como ZIP, intentando lectura directa...');
-      throw zipError;
+    // Extraer campos con regex
+    const fromMatch = contentStr.match(/From:\s*([^\r\n]+)/i);
+    const toMatch = contentStr.match(/To:\s*([^\r\n]+)/i);
+    const subjectMatch = contentStr.match(/Subject:\s*([^\r\n]+)/i);
+    const dateMatch = contentStr.match(/Date:\s*([^\r\n]+)/i);
+
+    email.from = fromMatch ? fromMatch[1].trim() : '';
+    email.to = toMatch ? toMatch[1].trim() : '';
+    email.subject = subjectMatch ? subjectMatch[1].trim() : '';
+    email.date = dateMatch ? dateMatch[1].trim() : '';
+
+    // Intentar extraer el cuerpo después de las cabeceras
+    const bodyMatch = contentStr.split(/\r?\n\r?\n/);
+    if (bodyMatch.length > 1) {
+      email.body = stripHTML(bodyMatch.slice(1).join('\n').substring(0, 1000));
     }
 
-    // Buscar todos los archivos de mensajes
-    console.log('🔎 Buscando mensajes...');
-    const messageFiles = await findMessageFiles(tempDir);
-    console.log(`📧 Encontrados ${messageFiles.length} archivos de mensaje`);
+    return email;
+  } catch (error) {
+    return null;
+  }
+}
 
-    // Parsear cada mensaje
+/**
+ * Parsea un archivo OLM leyendo directamente del ZIP
+ */
+export async function parseOLMFile(olmFilePath) {
+  try {
+    console.log('📦 Abriendo archivo OLM...');
+
+    const zip = new AdmZip(olmFilePath);
+    const zipEntries = zip.getEntries();
+
+    console.log(`📧 Encontradas ${zipEntries.length} entradas en el archivo`);
+
+    // Filtrar solo archivos que parezcan mensajes
+    const messageEntries = zipEntries.filter(entry => {
+      if (entry.isDirectory) return false;
+
+      const name = entry.entryName.toLowerCase();
+      // Buscar archivos en carpetas de mensajes
+      return (name.includes('message') ||
+              name.includes('inbox') ||
+              name.includes('sent') ||
+              name.includes('bandeja') ||
+              name.includes('.eml') ||
+              name.includes('.msg') ||
+              (name.includes('com.microsoft') && !name.includes('attachment')));
+    });
+
+    console.log(`📬 Filtrando ${messageEntries.length} posibles mensajes...`);
+
+    // Parsear mensajes (limitar a 500 para evitar sobrecarga)
     const emails = [];
-    for (const file of messageFiles.slice(0, 500)) { // Limitar a 500 mensajes para evitar sobrecarga
-      const email = await parseMessageFile(file);
-      if (email && (email.subject || email.body)) {
-        emails.push(email);
+    const limit = Math.min(messageEntries.length, 500);
+
+    for (let i = 0; i < limit; i++) {
+      const entry = messageEntries[i];
+
+      try {
+        const content = entry.getData();
+        const email = parseMessageContent(content);
+
+        if (email && (email.subject || email.from)) {
+          emails.push(email);
+        }
+      } catch (parseError) {
+        // Ignorar archivos que no se pueden parsear
+        continue;
+      }
+
+      // Log de progreso cada 100 mensajes
+      if ((i + 1) % 100 === 0) {
+        console.log(`📊 Procesados ${i + 1}/${limit} archivos...`);
       }
     }
 
-    // Limpiar directorio temporal
-    await fs.rm(tempDir, { recursive: true, force: true });
-
+    console.log(`✅ Se parsearon ${emails.length} correos exitosamente`);
     return emails;
-  } catch (error) {
-    // Intentar limpiar en caso de error
-    try {
-      await fs.rm(tempDir, { recursive: true, force: true });
-    } catch (e) {
-      console.error('Error limpiando directorio temporal:', e);
-    }
 
+  } catch (error) {
     throw new Error(`Error parseando archivo OLM: ${error.message}`);
   }
 }
