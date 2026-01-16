@@ -197,13 +197,18 @@ function parseMessageContent(content) {
       }
     }
 
-    // Aceptar el email solo si tiene un from O to válido (con @)
-    // Esto evita aceptar basura como /b, /a, tags HTML, etc.
+    // Validación de email:
+    // - Si tiene from/to con @, es válido
+    // - Si no tiene emails válidos pero tiene subject O body, también es válido
+    // - Esto evita aceptar basura pura (/b, /a, tags HTML) pero acepta emails con contenido
     const hasValidFrom = email.from && email.from.includes('@');
     const hasValidTo = email.to && email.to.includes('@');
+    const hasValidEmail = hasValidFrom || hasValidTo;
+    const hasSubject = email.subject && email.subject.length > 3;
+    const hasBody = email.body && email.body.length > 20;
 
-    // Necesita al menos un email válido (from o to)
-    if (hasValidFrom || hasValidTo) {
+    // Aceptar si tiene email válido, O si tiene contenido (subject o body)
+    if (hasValidEmail || hasSubject || hasBody) {
       return email;
     }
 
