@@ -56,14 +56,14 @@ function extractCleanEmail(emailString) {
     cleaned = bracketMatch[1];
   }
 
-  // Extraer solo la parte del email con regex
+  // Extraer solo la parte del email con regex - DEBE tener @ para ser válido
   const emailMatch = cleaned.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
   if (emailMatch) {
     return emailMatch[1].toLowerCase().trim();
   }
 
-  // Si no se encontró un patrón de email válido, devolver string limpio
-  return cleaned.substring(0, 100).trim();
+  // Si no se encontró un patrón de email válido con @, devolver cadena vacía
+  return '';
 }
 
 /**
@@ -197,8 +197,13 @@ function parseMessageContent(content) {
       }
     }
 
-    // Aceptar el email si al menos tiene asunto O remitente O contenido
-    if (email.subject || email.from || email.body.length > 10) {
+    // Aceptar el email solo si tiene un from O to válido (con @)
+    // Esto evita aceptar basura como /b, /a, tags HTML, etc.
+    const hasValidFrom = email.from && email.from.includes('@');
+    const hasValidTo = email.to && email.to.includes('@');
+    const hasSubject = email.subject && email.subject.length > 0;
+
+    if ((hasValidFrom || hasValidTo) && hasSubject) {
       return email;
     }
 

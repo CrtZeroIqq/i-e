@@ -17,12 +17,13 @@ function calculateStats(emails) {
     if (email.subject) stats.withSubject++;
     if (email.body) stats.withBody++;
 
-    if (email.from) {
+    // Solo contar emails válidos (que contengan @)
+    if (email.from && email.from.includes('@')) {
       stats.uniqueSenders.add(email.from);
       stats.topSenders[email.from] = (stats.topSenders[email.from] || 0) + 1;
     }
 
-    if (email.to) {
+    if (email.to && email.to.includes('@')) {
       stats.uniqueRecipients.add(email.to);
       stats.topRecipients[email.to] = (stats.topRecipients[email.to] || 0) + 1;
     }

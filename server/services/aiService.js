@@ -17,13 +17,13 @@ function prepareEmailSummary(emails) {
   const emailsToAnalyze = emails;
 
   emailsToAnalyze.forEach(email => {
-    // Contar remitentes
-    if (email.from) {
+    // Contar solo remitentes válidos (con @)
+    if (email.from && email.from.includes('@')) {
       summary.senders[email.from] = (summary.senders[email.from] || 0) + 1;
     }
 
-    // Contar destinatarios
-    if (email.to) {
+    // Contar solo destinatarios válidos (con @)
+    if (email.to && email.to.includes('@')) {
       summary.recipients[email.to] = (summary.recipients[email.to] || 0) + 1;
     }
 
@@ -74,61 +74,44 @@ function generateAnalysisPrompt(emailSummary) {
     .map(t => `[CORREO] Asunto: "${t.subject}" | Contenido: ${t.preview}`)
     .join('\n');
 
-  return `Eres analista para Instituto Profesional Santo Tomás. Analiza ${emailSummary.total} correos sobre Innovación y Emprendimiento 2025.
+  return `Eres analista de emails para Instituto Profesional Santo Tomás, Sede Iquique.
 
-CONTEXTO: Informe ejecutivo para Dirección Académica sobre gestión I+E año 2025.
+INSTRUCCIONES CRÍTICAS:
+1. Analiza ÚNICAMENTE la información REAL presente en los ${emailSummary.total} correos proporcionados
+2. NUNCA inventes nombres, personas, proyectos o datos ficticios
+3. Si NO encuentras información específica en los correos, indica "No se identificó información específica sobre este tema en los correos analizados"
+4. Cita SOLAMENTE nombres, fechas y proyectos que aparezcan EXPLÍCITAMENTE en los asuntos y contenidos proporcionados
 
-REMITENTES PRINCIPALES:
+REMITENTES REALES (${Object.keys(emailSummary.senders).length} únicos):
 ${topSenders}
 
-ASUNTOS CLAVE:
+ASUNTOS DE CORREOS REALES:
 ${limitedSubjects}
 
-CONTENIDO DE CORREOS:
+MUESTRA DE CONTENIDO REAL DE CORREOS:
 ${limitedTopics}
 
-GENERA INFORME EJECUTIVO PROFESIONAL:
+GENERA INFORME BASADO EXCLUSIVAMENTE EN LOS DATOS ANTERIORES:
 
 ## RESUMEN EJECUTIVO
-Síntesis de actividades I+E 2025, principales logros y desafíos identificados en las comunicaciones.
+[Resume qué temas aparecen más frecuentemente en los asuntos y contenidos de los correos reales proporcionados]
 
-## 1. INICIATIVAS Y PROYECTOS DE INNOVACIÓN
-- Proyectos específicos mencionados (nombres, responsables, estado)
-- Torneos, concursos o eventos de innovación realizados
-- Iniciativas de emprendimiento desarrolladas
-- Tecnologías o metodologías innovadoras aplicadas
+## 1. INICIATIVAS Y PROYECTOS IDENTIFICADOS EN LOS CORREOS
+[Lista SOLO proyectos, torneos o iniciativas mencionados explícitamente en los asuntos/contenidos anteriores. Si no hay, indica "No se identificaron proyectos específicos"]
 
-## 2. GESTIÓN ACADÉMICA Y OPERATIVA
-- Decisiones estratégicas comunicadas
-- Coordinaciones con docentes y estudiantes
-- Procesos administrativos relacionados con I+E
-- Reuniones y acuerdos relevantes
+## 2. TEMAS DE GESTIÓN ACADÉMICA EN LOS CORREOS
+[Lista SOLO temas administrativos o académicos mencionados en los correos reales. Cita asuntos específicos]
 
-## 3. COLABORACIÓN Y PARTICIPACIÓN
-- Docentes involucrados en I+E
-- Participación estudiantil
-- Colaboraciones externas (empresas, instituciones)
-- Trabajo interdisciplinario
+## 3. PERSONAS Y COLABORACIÓN IDENTIFICADA
+[Lista SOLO personas (de los remitentes/destinatarios) que aparecen en los datos reales. NO inventes nombres]
 
-## 4. RESULTADOS Y LOGROS 2025
-- Hitos alcanzados
-- Métricas de participación
-- Proyectos completados o en desarrollo
-- Reconocimientos o premios
+## 4. PATRONES Y TENDENCIAS OBSERVADAS
+[Describe patrones de comunicación basados en frecuencia de remitentes y temas recurrentes en asuntos]
 
-## 5. DESAFÍOS Y ÁREAS DE MEJORA
-- Obstáculos identificados
-- Necesidades detectadas
-- Recursos requeridos
-- Procesos a optimizar
+## 5. RECOMENDACIONES
+[Sugiere acciones basadas SOLO en lo observado en los correos reales]
 
-## 6. RECOMENDACIONES 2026
-- Acciones prioritarias
-- Estrategias de mejora
-- Propuestas de inversión
-- Metas sugeridas
-
-IMPORTANTE: Usa nombres específicos, fechas, proyectos y personas REALES mencionadas en los correos. Formato ejecutivo profesional.`;
+RECUERDA: NO inventes información. Solo usa datos de los correos proporcionados arriba.`;
 }
 
 /**
