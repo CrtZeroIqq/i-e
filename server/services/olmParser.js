@@ -27,6 +27,46 @@ function stripHTML(html) {
 }
 
 /**
+ * Extrae una dirección de email limpia de un string que puede contener nombre y email
+ * Ejemplos: "John Doe <john@example.com>" -> "john@example.com"
+ *           "john@example.com" -> "john@example.com"
+ *           "=?UTF-8?Q?Name?= <email@domain.com>" -> "email@domain.com"
+ */
+function extractCleanEmail(emailString) {
+  if (!emailString) return '';
+
+  // Limpiar entidades HTML
+  let cleaned = emailString
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .trim();
+
+  // Si hay múltiples destinatarios (separados por , o ;), tomar solo el primero
+  if (cleaned.includes(',')) {
+    cleaned = cleaned.split(',')[0].trim();
+  } else if (cleaned.includes(';')) {
+    cleaned = cleaned.split(';')[0].trim();
+  }
+
+  // Intentar extraer email entre < >
+  const bracketMatch = cleaned.match(/<([^>]+)>/);
+  if (bracketMatch) {
+    cleaned = bracketMatch[1];
+  }
+
+  // Extraer solo la parte del email con regex
+  const emailMatch = cleaned.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+  if (emailMatch) {
+    return emailMatch[1].toLowerCase().trim();
+  }
+
+  // Si no se encontró un patrón de email válido, devolver string limpio
+  return cleaned.substring(0, 100).trim();
+}
+
+/**
  * Parsea un archivo de mensaje individual
  */
 async function parseMessageFile(filePath) {
@@ -47,8 +87,8 @@ async function parseMessageFile(filePath) {
     // Extraer campos del email
     if (result && result.email) {
       const emailData = result.email;
-      email.from = emailData.from || '';
-      email.to = emailData.to || '';
+      email.from = emailData.from ? extractCleanEmail(emailData.from) : '';
+      email.to = emailData.to ? extractCleanEmail(emailData.to) : '';
       email.subject = emailData.subject || '';
       email.date = emailData.date || '';
 
@@ -67,8 +107,8 @@ async function parseMessageFile(filePath) {
       const subjectMatch = content.match(/Subject:\s*([^\r\n]+)/i);
       const dateMatch = content.match(/Date:\s*([^\r\n]+)/i);
 
-      email.from = fromMatch ? fromMatch[1].trim() : '';
-      email.to = toMatch ? toMatch[1].trim() : '';
+      email.from = fromMatch ? extractCleanEmail(fromMatch[1]) : '';
+      email.to = toMatch ? extractCleanEmail(toMatch[1]) : '';
       email.subject = subjectMatch ? subjectMatch[1].trim() : '';
       email.date = dateMatch ? dateMatch[1].trim() : '';
 
@@ -138,8 +178,8 @@ function parseMessageContent(content) {
     const dateMatch = contentStr.match(/Date:\s*([^\r\n]+)/i) ||
                      contentStr.match(/<OPFMessageCopySentTime>([^<]+)/i);
 
-    email.from = fromMatch ? fromMatch[1].trim() : '';
-    email.to = toMatch ? toMatch[1].trim() : '';
+    email.from = fromMatch ? extractCleanEmail(fromMatch[1]) : '';
+    email.to = toMatch ? extractCleanEmail(toMatch[1]) : '';
     email.subject = subjectMatch ? subjectMatch[1].trim() : '';
     email.date = dateMatch ? dateMatch[1].trim() : '';
 
